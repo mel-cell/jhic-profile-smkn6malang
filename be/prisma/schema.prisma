@@ -1,0 +1,377 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum untuk peran pengguna
+enum Role {
+  STUDENT
+  COMPANY
+  ADMIN
+}
+
+// Model untuk pengguna (users)
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi ke StudentProfile (satu-ke-satu, opsional karena tidak semua user adalah student)
+  studentProfile StudentProfile?
+  // Relasi ke CompanyProfile (satu-ke-satu, opsional karena tidak semua user adalah company)
+  companyProfile CompanyProfile?
+
+  // Relasi ke Berita (satu-ke-banyak, satu user bisa membuat banyak berita)
+  berita        Berita[]
+  // Relasi ke Ekskul (satu-ke-banyak, satu user bisa mengelola banyak ekskul)
+  ekskulManaged Ekskul[] @relation("UserEkskulManager") // Memberi nama relasi untuk disambiguasi
+
+  // Relasi untuk DirectRecruitment sebagai recruiter
+  directRecruitmentsAsRecruiter DirectRecruitment[] @relation("DirectRecruitmentRecruiter")
+
+  // Relasi untuk notifications
+  notifications Notification[]
+
+  // Relasi untuk messages (sebagai sender dan receiver)
+  sentMessages     Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
+
+  // Relasi untuk user settings
+  settings UserSetting?
+
+  // Relasi untuk activity logs
+  activityLogs ActivityLog[]
+}
+
+// Model untuk student_profiles
+model StudentProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique // Kunci asing ke User
+  fullName    String
+  nis         String?  // Nomor Induk Siswa
+  address     String?
+  phoneNumber String?
+  major       String?
+  description String?
+  profilePhotoPath String? // Path untuk foto profil siswa
+  gender      String?
+  birthDate   String?
+  skills      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relasi ke User (satu-ke-satu)
+  user User @relation(fields: [userId], references: [id])
+
+  // Relasi ke StudentCvs (satu-ke-banyak, satu student bisa memiliki banyak CV)
+  studentCvs                  StudentCvs[]
+  // Relasi ke JobApplication (satu-ke-banyak, satu student bisa melamar banyak pekerjaan)
+  jobApplications             JobApplication[]
+  // Relasi ke DirectRecruitment (satu-ke-banyak, satu student bisa menerima banyak direct recruitment)
+  directRecruitmentsAsStudent DirectRecruitment[] @relation("StudentDirectRecruitments")
+
+  // Relasi untuk bookmarks
+  bookmarks Bookmark[]
+
+  // Relasi untuk reviews
+  reviews Review[]
+
+  // Relasi untuk portfolios
+  portfolios Portfolio[]
+}
+
+// Model untuk company_profiles
+model CompanyProfile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique // Kunci asing ke User
+  // industryId              String            @unique // Dari ERD, ini sepertinya industry_id internal perusahaan, bukan dari tabel terpisah
+  companyName        String
+  industryType       String? // Contoh: IT, Manufaktur, dll.
+  address            String?
+  phoneNumber        String?
+  website            String?
+  description        String?
+  contactPersonName  String?
+  contactPersonEmail String?
+  logoPath           String? // Path untuk logo perusahaan
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relasi ke User (satu-ke-satu)
+  user User @relation(fields: [userId], references: [id])
+
+  // Relasi ke JobPosting (satu-ke-banyak, satu perusahaan bisa membuat banyak job posting)
+  jobPostings        JobPosting[]
+  // Relasi ke DirectRecruitment (satu-ke-banyak, satu perusahaan bisa melakukan banyak direct recruitment)
+  directRecruitments DirectRecruitment[] @relation("CompanyDirectRecruitments")
+
+  // Relasi untuk reviews
+  reviews Review[]
+}
+
+// Model untuk berita
+model Berita {
+  id        String   @id @default(uuid())
+  judul     String
+  content   String
+  imagePath String?
+  userId    String // Kunci asing ke User yang membuat berita
+  kategori  String? // Menggunakan String untuk kategori, bisa dibuat enum jika kategori terbatas
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi ke User (satu-ke-banyak)
+  author User @relation(fields: [userId], references: [id])
+}
+
+// Model untuk ekskul
+model Ekskul {
+  id           String   @id @default(uuid())
+  namaEkskul   String
+  deskripsi    String?
+  kategori     String? // Menggunakan String untuk kategori, bisa dibuat enum jika kategori terbatas
+  status       String? // Menggunakan String untuk status, bisa dibuat enum
+  userInternal String? // Kunci asing ke User yang mengelola ekskul (manager)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relasi ke User (satu-ke-banyak, user manager ekskul)
+  manager User? @relation("UserEkskulManager", fields: [userInternal], references: [id])
+}
+
+// Model untuk student_cvs
+model StudentCvs {
+  id               String   @id @default(uuid())
+  studentProfileId String // Kunci asing ke StudentProfile
+  filePath         String
+  fileName         String
+  fileSize         Int
+  isActive         Boolean  @default(true) // Menggunakan isActive daripada is_active untuk konvensi Prisma
+  uploadedAt       DateTime @default(now()) // Menggunakan uploadedAt daripada uploadAt
+
+  // Relasi ke StudentProfile (satu-ke-banyak)
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
+
+  // Relasi ke JobApplication (satu-ke-banyak, satu CV bisa digunakan untuk banyak lamaran)
+  jobApplications JobApplication[]
+}
+
+// Model untuk job_postings
+model JobPosting {
+  id                  String    @id @default(uuid())
+  companyProfileId    String // Kunci asing ke CompanyProfile yang memposting lowongan
+  jobTitle            String
+  description         String?
+  requirements        String?
+  location            String?
+  salaryRange         String?
+  employmentType      String? // Contoh: Full-time, Part-time, Internship
+  applicationDeadline DateTime?
+  notes               String?
+  status              String    @default("PENDING") // Status untuk approval admin
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relasi ke CompanyProfile (satu-ke-banyak)
+  companyProfile CompanyProfile @relation(fields: [companyProfileId], references: [id])
+
+  // Relasi ke JobApplication (satu-ke-banyak, satu lowongan bisa memiliki banyak lamaran)
+  jobApplications JobApplication[]
+
+  // Relasi untuk bookmarks
+  bookmarks Bookmark[]
+}
+
+// Model untuk job_applications
+model JobApplication {
+  id               String   @id @default(uuid())
+  studentProfileId String // Kunci asing ke StudentProfile yang melamar
+  jobPostingId     String // Kunci asing ke JobPosting yang dilamar
+  studentCvId      String // Kunci asing ke StudentCvs yang digunakan untuk melamar
+  applicationDate  DateTime @default(now())
+  lastStatusUpdate DateTime @updatedAt
+  notes            String?
+  status           String   @default("PENDING") // Tambahkan status lamaran, bisa dibuat enum
+
+  // Relasi ke StudentProfile (satu-ke-banyak)
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
+  // Relasi ke JobPosting (satu-ke-banyak)
+  jobPosting     JobPosting     @relation(fields: [jobPostingId], references: [id])
+  // Relasi ke StudentCvs (satu-ke-banyak, CV yang digunakan untuk lamaran ini)
+  studentCv      StudentCvs     @relation(fields: [studentCvId], references: [id])
+
+  // Relasi untuk reviews
+  reviews Review[]
+
+  // Relasi untuk interviews
+  interviews Interview[]
+
+  @@unique([studentProfileId, jobPostingId]) // Memastikan satu student hanya bisa melamar satu job posting sekali
+}
+
+// Model untuk direct_recruitments
+model DirectRecruitment {
+  id               String   @id @default(uuid())
+  companyProfileId String // Kunci asing ke CompanyProfile yang melakukan recruitment
+  studentProfileId String // Kunci asing ke StudentProfile yang direkrut
+  userId           String? // Kunci asing ke User (company user)
+  message          String?
+  notes            String?
+  recruitedAt      DateTime @default(now())
+  lastStatusUpdate DateTime @updatedAt
+  status           String   @default("PENDING") // Tambahkan status direct recruitment
+
+  // Relasi ke CompanyProfile (satu-ke-banyak)
+  companyProfile CompanyProfile @relation("CompanyDirectRecruitments", fields: [companyProfileId], references: [id])
+  // Relasi ke StudentProfile (satu-ke-banyak)
+  studentProfile StudentProfile @relation("StudentDirectRecruitments", fields: [studentProfileId], references: [id])
+  // Relasi ke User (company user)
+  recruiter      User?          @relation("DirectRecruitmentRecruiter", fields: [userId], references: [id], map: "DirectRecruitment_recruiter_fkey")
+
+  @@unique([companyProfileId, studentProfileId]) // Memastikan satu perusahaan hanya bisa melakukan direct recruitment satu student sekali
+}
+
+// Model untuk notifications
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String // Kunci asing ke User
+  title     String
+  message   String
+  type      String // email, in_app, push
+  isRead    Boolean  @default(false)
+  data      Json? // Additional data for the notification
+  createdAt DateTime @default(now())
+
+  // Relasi ke User (satu-ke-banyak)
+  user User @relation(fields: [userId], references: [id])
+}
+
+// Model untuk bookmarks
+model Bookmark {
+  id               String   @id @default(uuid())
+  studentProfileId String // Kunci asing ke StudentProfile
+  jobPostingId     String // Kunci asing ke JobPosting
+  createdAt        DateTime @default(now())
+
+  // Relasi ke StudentProfile (satu-ke-banyak)
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
+  // Relasi ke JobPosting (satu-ke-banyak)
+  jobPosting     JobPosting     @relation(fields: [jobPostingId], references: [id])
+
+  @@unique([studentProfileId, jobPostingId]) // Satu student hanya bisa bookmark satu job sekali
+}
+
+// Model untuk reviews
+model Review {
+  id               String   @id @default(uuid())
+  studentProfileId String // Kunci asing ke StudentProfile
+  companyProfileId String // Kunci asing ke CompanyProfile
+  jobApplicationId String? // Kunci asing ke JobApplication (opsional)
+  rating           Int // 1-5 stars
+  title            String
+  comment          String?
+  isAnonymous      Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relasi ke StudentProfile (satu-ke-banyak)
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
+  // Relasi ke CompanyProfile (satu-ke-banyak)
+  companyProfile CompanyProfile @relation(fields: [companyProfileId], references: [id])
+  // Relasi ke JobApplication (satu-ke-satu, opsional)
+  jobApplication JobApplication? @relation(fields: [jobApplicationId], references: [id])
+
+  @@unique([studentProfileId, companyProfileId, jobApplicationId]) // Satu review per application
+}
+
+// Model untuk interviews
+model Interview {
+  id               String   @id @default(uuid())
+  jobApplicationId String // Kunci asing ke JobApplication
+  scheduledAt      DateTime
+  location         String? // physical location or virtual link
+  interviewType    String // physical, virtual, phone
+  notes            String?
+  status           String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  feedback         String?
+  rating           Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relasi ke JobApplication (satu-ke-satu)
+  jobApplication JobApplication @relation(fields: [jobApplicationId], references: [id])
+}
+
+// Model untuk portfolios
+model Portfolio {
+  id               String   @id @default(uuid())
+  studentProfileId String // Kunci asing ke StudentProfile
+  title            String
+  description      String?
+  filePath         String?
+  fileType         String? // image, pdf, video, link
+  url              String? // external link
+  isPublic         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relasi ke StudentProfile (satu-ke-banyak)
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
+}
+
+// Model untuk messages
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String // Kunci asing ke User
+  receiverId String // Kunci asing ke User
+  subject    String?
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  // Relasi ke User sebagai sender (satu-ke-banyak)
+  sender User @relation("MessageSender", fields: [senderId], references: [id])
+  // Relasi ke User sebagai receiver (satu-ke-banyak)
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id])
+}
+
+// Model untuk user_settings
+model UserSetting {
+  id       String  @id @default(uuid())
+  userId   String  @unique // Kunci asing ke User
+  key      String // setting key (email_notifications, push_notifications, etc.)
+  value    String // setting value
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi ke User (satu-ke-satu)
+  user User @relation(fields: [userId], references: [id])
+}
+
+// Model untuk activity_logs
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String? // Kunci asing ke User (opsional untuk system activities)
+  action    String // login, apply_job, create_posting, etc.
+  details   Json? // Additional details about the activity
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Relasi ke User (satu-ke-banyak, opsional)
+  user User? @relation(fields: [userId], references: [id])
+}
