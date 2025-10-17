@@ -1,6 +1,5 @@
 # deps
 node_modules/
-package.json
-bun.lock
+
 
 /src/generated/prisma
