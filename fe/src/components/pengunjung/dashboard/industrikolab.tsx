@@ -42,8 +42,8 @@ const IndustriKolaborasi: React.FC = () => {
 
   return (
     <section className="w-full bg-white">
-      <div className="py-16 container mx-auto px-6 text-center animate-fade-in-up delay-100">
-        <h2 className="text-3xl font-bold text-orange-600 mb-12">
+      <div className="py-12 md:py-16 container mx-auto px-4 md:px-6 text-center animate-fade-in-up delay-100">
+        <h2 className="text-2xl md:text-3xl font-bold text-orange-600 mb-8 md:mb-12">
           Industri Kolaborasi
         </h2>
 
@@ -51,23 +51,23 @@ const IndustriKolaborasi: React.FC = () => {
           logos={logos}
           speed={50}
           direction="left"
-          logoHeight={120}
-          logoWidth={180}
-          gap={40}
+          logoHeight={100}
+          logoWidth={150}
+          gap={30}
           pauseOnHover={true}
           scaleOnHover={false}
           ariaLabel="Industri Kolaborasi"
-          className="py-8"
+          className="py-6 md:py-8"
         />
       </div>
 
-      <div className="py-20 md:py-32 text-center animate-fade-in-up delay-200">
+      <div className="py-16 md:py-20 lg:py-32 text-center animate-fade-in-up delay-200">
         <div className="max-w-4xl mx-auto px-4">
           <h6
             className="
-            text-3xl md:text-3xl
+            text-2xl md:text-3xl
             font-extrabold text-orange-500
-            mb-10
+            mb-8 md:mb-10
             tracking-wider
           "
           >
@@ -78,17 +78,17 @@ const IndustriKolaborasi: React.FC = () => {
             <button
               className={`
                 ${primaryOrange} text-white font-bold
-                px-12 py-5 rounded-full
+                px-8 md:px-12 py-4 md:py-5 rounded-full
                 shadow-2xl shadow-orange-300/80
                 transition duration-300
                 transform hover:scale-[1.05] hover:shadow-orange-400/90
                 flex items-center justify-center mx-auto
-                text-xl  uppercase
+                text-lg md:text-xl uppercase
                 animate-fade-in-up delay-300
               `}
             >
               AYO DAFTAR SEKARANG
-              <ArrowRight className="w-6 h-6 ml-3" />
+              <ArrowRight className="w-5 h-5 md:w-6 md:h-6 ml-2 md:ml-3" />
             </button>
           </Link>
         </div>

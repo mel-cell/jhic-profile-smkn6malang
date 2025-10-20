@@ -1,6 +1,7 @@
 // File: src/app/(main)/layout.tsx (Layout Grup Main - DENGAN HEADER & FOOTER)
 import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
+import ButtonAi from "@/components/chatbot/ButtonAi";
 import React from "react";
 
 interface MainLayoutProps {
@@ -13,7 +14,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <>
       <Header />
       <main className="flex-1">{children}</main>
-      <Footer />  
+      <Footer />
+      {/* AI Chatbot Button - Fixed position bottom right */}
+      <ButtonAi />
     </>
   );
 }

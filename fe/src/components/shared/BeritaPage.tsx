@@ -21,7 +21,7 @@ interface NewsItem {
 
 const BeritaPage: React.FC<BeritaPageProps> = ({ context }) => {
     // Tentukan prefix berdasarkan context
-    const prefix = context === 'pengunjung' ? '/pengunjung' : `/${context}`;
+    const prefix = context === 'pengunjung' ? '' : `/${context}`;
 
     // Offset negatif untuk menaikkan konten di bawah Navbar/Hero
     const NAVBAR_OFFSET = "-mt-[6rem] md:-mt-[10rem]";
@@ -29,6 +29,11 @@ const BeritaPage: React.FC<BeritaPageProps> = ({ context }) => {
     const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Pagination state
+    const itemsPerPage = 9;
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         const fetchNews = async () => {
@@ -50,6 +55,26 @@ const BeritaPage: React.FC<BeritaPageProps> = ({ context }) => {
 
         fetchNews();
     }, []);
+
+    // Filter news based on search query
+    const filteredNews = newsItems.filter(item =>
+        searchQuery === '' ||
+        item.judul.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.kategori && item.kategori.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
+    // Pagination calculations
+    const totalItems = filteredNews.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentNews = filteredNews.slice(startIndex, endIndex);
+
+    // Reset to page 1 when search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
 
     return (
         <main className="w-full">
@@ -83,6 +108,8 @@ const BeritaPage: React.FC<BeritaPageProps> = ({ context }) => {
                         <input
                             type="text"
                             placeholder="Cari berita..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full p-3 pl-12 border-2 border-gray-200 rounded-full focus:outline-none focus:border-orange-500 transition-colors"
                         />
                         <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -106,7 +133,7 @@ const BeritaPage: React.FC<BeritaPageProps> = ({ context }) => {
                 {/* Grid Berita */}
                 {!loading && !error && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {newsItems.map((item) => (
+                        {currentNews.map((item) => (
                             <div key={item.id} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
                                 {/* Gambar */}
                                 <div className="relative w-full h-48">
@@ -145,12 +172,89 @@ const BeritaPage: React.FC<BeritaPageProps> = ({ context }) => {
                     </div>
                 )}
 
-                {/* Tombol Paginasi (Contoh) */}
-                <div className="flex justify-center mt-16">
-                    <button className="px-6 py-3 bg-orange-600 text-white font-bold rounded-lg shadow-lg hover:bg-orange-700 transition-colors">
-                        Lihat Lebih Banyak
-                    </button>
-                </div>
+                {/* No Results Message */}
+                {!loading && !error && filteredNews.length === 0 && searchQuery && (
+                    <div className="text-center py-16">
+                        <p className="text-gray-500 text-lg">
+                            Tidak ada berita yang sesuai dengan pencarian "{searchQuery}"
+                        </p>
+                        <button
+                            onClick={() => setSearchQuery('')}
+                            className="mt-4 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                        >
+                            Hapus Pencarian
+                        </button>
+                    </div>
+                )}
+
+                {/* Pagination Component */}
+                {!loading && !error && filteredNews.length > 0 && totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-16 space-x-2">
+                        {/* Previous Button */}
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                currentPage === 1
+                                    ? 'text-gray-400 cursor-not-allowed'
+                                    : 'text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            &larr; Sebelumnya
+                        </button>
+
+                        {/* Page Numbers */}
+                        <div className="flex space-x-1">
+                            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                                let pageNum;
+                                if (totalPages <= 5) {
+                                    pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                    pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                    pageNum = totalPages - 4 + i;
+                                } else {
+                                    pageNum = currentPage - 2 + i;
+                                }
+
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                            currentPage === pageNum
+                                                ? 'bg-orange-600 text-white'
+                                                : 'text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Next Button */}
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                currentPage === totalPages
+                                    ? 'text-gray-400 cursor-not-allowed'
+                                    : 'text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            Selanjutnya &rarr;
+                        </button>
+                    </div>
+                )}
+
+                {/* Show total results info */}
+                {!loading && !error && filteredNews.length > 0 && (
+                    <div className="text-center mt-8 text-gray-600">
+                        Menampilkan {startIndex + 1}-{Math.min(endIndex, totalItems)} dari {totalItems} berita
+                    </div>
+                )}
+
             </section>
         </main>
     );

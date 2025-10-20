@@ -22,12 +22,12 @@ export async function createJob(userId: string, data: CreateJobData) {
     throw new Error('Company profile not found')
   }
 
-  // Create the job posting with PENDING status
+  // Create the job posting with APPROVED status for auto-approval
   return await prisma.jobPosting.create({
     data: {
       companyProfileId: companyProfile.id,
       ...data,
-      status: 'PENDING'
+      status: 'APPROVED'
     },
     include: {
       companyProfile: {
@@ -80,12 +80,14 @@ export async function getJobById(jobId: string) {
           studentProfile: {
             select: {
               fullName: true,
-              major: true
+              major: true,
+              profilePhotoPath: true
             }
           },
           studentCv: {
             select: {
-              filePath: true
+              filePath: true,
+              fileName: true
             }
           }
         }

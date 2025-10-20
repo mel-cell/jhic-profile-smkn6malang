@@ -116,13 +116,7 @@ const JobListPage: React.FC = () => {
     const fetchJobs = async () => {
         try {
             setLoading(true);
-            const token = localStorage.getItem("authToken");
-            if (!token) {
-                setError("Token tidak ditemukan. Silakan login terlebih dahulu.");
-                return;
-            }
-
-            const response = await jobsAPI.getMyJobs(token);
+            const response = await jobsAPI.getAll();
             if (response.success) {
                 setJobs(response.data);
             } else {

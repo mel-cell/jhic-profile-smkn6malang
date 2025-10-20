@@ -57,15 +57,43 @@ router.get('/extracurriculars/:ekskulId', async (c) => {
 })
 
 // Admin news management
-router.post('/admin/news', authenticate, authorize('ADMIN'), zValidator('json', z.object({
-  judul: z.string().min(1),
-  content: z.string().min(1),
-  imagePath: z.string().optional(),
-  kategori: z.string().optional()
-})), async (c) => {
+router.post('/admin/news', authenticate, authorize('ADMIN'), async (c) => {
   try {
     const user = c.get('user') as any
-    const data = c.req.valid('json')
+    const formData = await c.req.formData()
+
+    const judul = formData.get('judul') as string
+    const content = formData.get('content') as string
+    const kategori = formData.get('kategori') as string
+    const image = formData.get('image') as File
+
+    if (!judul || !content) {
+      return c.json({ success: false, error: 'Judul dan content wajib diisi' }, 400)
+    }
+
+    let imagePath: string | undefined
+    if (image) {
+      // Handle file upload
+      const fileName = `${Date.now()}-${image.name}`
+      const filePath = `uploads/news/${fileName}`
+      // Save file to uploads/news directory
+      const fs = require('fs')
+      const path = require('path')
+      const uploadDir = path.join(process.cwd(), 'uploads/news')
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true })
+      }
+      const buffer = await image.arrayBuffer()
+      fs.writeFileSync(path.join(uploadDir, fileName), Buffer.from(buffer))
+      imagePath = filePath
+    }
+
+    const data = {
+      judul,
+      content,
+      kategori,
+      imagePath
+    }
 
     const result = await publicService.createNews(user.id, data)
     return c.json({ success: true, data: result })
@@ -102,7 +130,7 @@ router.delete('/admin/news/:newsId', authenticate, authorize('ADMIN'), async (c)
 // Jobs endpoints (public access to approved jobs)
 router.get('/jobs', async (c) => {
   try {
-    const jobs = await publicService.getAllJobs()
+    const jobs = await publicService.getAllApprovedJobs()
     return c.json({ success: true, data: jobs })
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 400)

@@ -23,8 +23,8 @@ export async function applyForJob(userId: string, jobId: string, data: ApplyForJ
     throw new Error('Job posting not found')
   }
 
-  if (jobPosting.status !== 'ACTIVE') {
-    throw new Error('Job posting is not active')
+  if (jobPosting.status !== 'APPROVED') {
+    throw new Error('Job posting is not approved')
   }
 
   // Check if student already applied

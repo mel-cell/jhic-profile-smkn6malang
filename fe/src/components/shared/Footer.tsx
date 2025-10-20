@@ -50,14 +50,14 @@ const Footer = () => {
 
   return (
     <footer className="bg-yellow-400 text-black px-4 md:px-6 lg:px-10 py-6 md:py-8 lg:py-10">
-      <div className="max-w-7xl justify-center mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-center">
+      <div className="max-w-7xl justify-center mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-start">
         {/* Kiri */}
-        <div className="space-y-4 ">
+        <div className="space-y-4">
           <h2 className="text-xl md:text-2xl font-semibold">SMK Negeri 6 Malang</h2>
           <p className="text-sm md:text-base">Pusat keunggulan Teknik & inovasi</p>
           <div className="space-y-2">
             <p className="text-sm md:text-base">Ikuti kami di sosial media</p>
-            <div className="flex space-x-4 text-xl md:text-2xl">
+            <div className="flex space-x-3 md:space-x-4 text-xl md:text-2xl">
               <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-facebook" />
               </a>

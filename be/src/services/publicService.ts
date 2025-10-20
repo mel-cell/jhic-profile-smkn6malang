@@ -258,3 +258,19 @@ export async function getSimilarJobs(jobId: string, limit: number = 5) {
 
   return similarJobs
 }
+
+export async function getAllApprovedJobs() {
+  return await prisma.jobPosting.findMany({
+    where: { status: 'APPROVED' },
+    include: {
+      companyProfile: {
+        select: {
+          companyName: true,
+          industryType: true,
+          logoPath: true
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+}

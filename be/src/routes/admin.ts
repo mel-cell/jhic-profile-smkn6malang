@@ -1,88 +1,235 @@
-import { Hono } from 'hono'
-import { zValidator } from '@hono/zod-validator'
-import { z } from 'zod'
-import { authenticate, authorize } from '../middlewares/auth'
-import * as adminService from '../services/adminService'
+import { Hono } from 'hono';
+import { authenticate, authorize } from '../middlewares/auth';
+import { createNews, updateNews, deleteNews } from '../services/newsService';
+import { createPrestasi, updatePrestasi, deletePrestasi } from '../services/prestasiService';
+import { createEkskul, updateEkskul, deleteEkskul } from '../services/ekskulService';
+import { getAllUsers, updateUserRole, deleteUser, getAllJobPostings, updateJobPostingStatus, getAllApplications } from '../services/adminService';
 
-const router = new Hono()
+const router = new Hono();
 
-// User management
-router.get('/users', authenticate, authorize('ADMIN'), async (c) => {
+// Apply authentication and admin middleware to all routes
+router.use('*', authenticate);
+router.use('*', authorize('ADMIN'));
+
+// User management routes
+router.get('/users', async (c) => {
   try {
-    const users = await adminService.getAllUsers()
-    return c.json({ success: true, data: users })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 400)
+    const users = await getAllUsers();
+    return c.json({ success: true, data: users });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
   }
-})
+});
 
-router.put('/users/:userId/role', authenticate, authorize('ADMIN'), zValidator('json', z.object({
-  role: z.enum(['STUDENT', 'COMPANY', 'ADMIN'])
-})), async (c) => {
+router.put('/users/:id/role', async (c) => {
   try {
-    const { userId } = c.req.param()
-    const data = c.req.valid('json')
+    const { id } = c.req.param();
+    const { role } = await c.req.json();
 
-    const result = await adminService.updateUserRole(userId, data)
-    return c.json({ success: true, data: result })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 400)
+    if (!['STUDENT', 'COMPANY', 'ADMIN'].includes(role)) {
+      return c.json({ success: false, error: 'Invalid role' }, 400);
+    }
+
+    const result = await updateUserRole(id, { role });
+    return c.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
   }
-})
+});
 
-router.delete('/users/:userId', authenticate, authorize('ADMIN'), async (c) => {
+router.delete('/users/:id', async (c) => {
   try {
-    const { userId } = c.req.param()
-
-    await adminService.deleteUser(userId)
-    return c.json({ success: true, message: 'User deleted successfully' })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 400)
+    const { id } = c.req.param();
+    const result = await deleteUser(id);
+    if (result.success) {
+      return c.json(result);
+    } else {
+      return c.json(result, 404);
+    }
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
   }
-})
+});
 
-// Job posting management
-router.get('/jobs', authenticate, authorize('ADMIN'), async (c) => {
+// News routes
+router.post('/news', async (c) => {
   try {
-    const jobs = await adminService.getAllJobPostings()
-    return c.json({ success: true, data: jobs })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 400)
+    const data = await c.req.json();
+    const result = await createNews(data);
+    if (result.success) {
+      return c.json(result, 201);
+    } else {
+      return c.json(result, 400);
+    }
+  } catch (error) {
+    console.error('Error creating news:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
   }
-})
+});
 
-router.put('/jobs/:jobId/status', authenticate, authorize('ADMIN'), zValidator('json', z.object({
-  status: z.string().min(1)
-})), async (c) => {
+router.put('/news/:id', async (c) => {
   try {
-    const { jobId } = c.req.param()
-    const { status } = c.req.valid('json')
-
-    const result = await adminService.updateJobPostingStatus(jobId, status)
-    return c.json({ success: true, data: result })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 400)
+    const { id } = c.req.param();
+    const data = await c.req.json();
+    const result = await updateNews(id, data);
+    if (result.success) {
+      return c.json(result);
+    } else {
+      return c.json(result, 404);
+    }
+  } catch (error) {
+    console.error('Error updating news:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
   }
-})
+});
 
-// Application management
-router.get('/applications', authenticate, authorize('ADMIN'), async (c) => {
+router.delete('/news/:id', async (c) => {
   try {
-    const applications = await adminService.getAllApplications()
-    return c.json({ success: true, data: applications })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 400)
+    const { id } = c.req.param();
+    const result = await deleteNews(id);
+    if (result.success) {
+      return c.json(result);
+    } else {
+      return c.json(result, 404);
+    }
+  } catch (error) {
+    console.error('Error deleting news:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
   }
-})
+});
 
-// Direct recruitment management
-router.get('/direct-recruitments', authenticate, authorize('ADMIN'), async (c) => {
+// Prestasi routes
+router.post('/prestasi', async (c) => {
   try {
-    const recruitments = await adminService.getAllDirectRecruitments()
-    return c.json({ success: true, data: recruitments })
-  } catch (error: any) {
-    return c.json({ success: false, error: error.message }, 400)
+    const data = await c.req.json();
+    const result = await createPrestasi(data);
+    if (result.success) {
+      return c.json(result, 201);
+    } else {
+      return c.json(result, 400);
+    }
+  } catch (error) {
+    console.error('Error creating prestasi:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
   }
-})
+});
 
-export default router
+router.put('/prestasi/:id', async (c) => {
+  try {
+    const { id } = c.req.param();
+    const data = await c.req.json();
+    const result = await updatePrestasi(id, data);
+    if (result.success) {
+      return c.json(result);
+    } else {
+      return c.json(result, 404);
+    }
+  } catch (error) {
+    console.error('Error updating prestasi:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
+  }
+});
+
+router.delete('/prestasi/:id', async (c) => {
+  try {
+    const { id } = c.req.param();
+    const result = await deletePrestasi(id);
+    if (result.success) {
+      return c.json(result);
+    } else {
+      return c.json(result, 404);
+    }
+  } catch (error) {
+    console.error('Error deleting prestasi:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
+  }
+});
+
+router.get('/job-postings', async (c) => {
+  try {
+    const jobs = await getAllJobPostings();
+    return c.json({ success: true, data: jobs });
+  } catch (error) {
+    console.error('Error fetching job postings:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
+  }
+});
+
+router.put('/job-postings/:id/status', async (c) => {
+  try {
+    const { id } = c.req.param();
+    const { status } = await c.req.json();
+
+    if (!['PENDING', 'APPROVED', 'REJECTED', 'EXPIRED'].includes(status)) {
+      return c.json({ success: false, error: 'Invalid status' }, 400);
+    }
+
+    const result = await updateJobPostingStatus(id, status);
+    return c.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error updating job posting status:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
+  }
+});
+
+router.get('/applications', async (c) => {
+  try {
+    const applications = await getAllApplications();
+    return c.json({ success: true, data: applications });
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
+  }
+});
+
+// Ekskul routes
+router.post('/ekskul', async (c) => {
+  try {
+    const data = await c.req.json();
+    const result = await createEkskul(data);
+    if (result.success) {
+      return c.json(result, 201);
+    } else {
+      return c.json(result, 400);
+    }
+  } catch (error) {
+    console.error('Error creating ekskul:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
+  }
+});
+
+router.put('/ekskul/:id', async (c) => {
+  try {
+    const { id } = c.req.param();
+    const data = await c.req.json();
+    const result = await updateEkskul(id, data);
+    if (result.success) {
+      return c.json(result);
+    } else {
+      return c.json(result, 404);
+    }
+  } catch (error) {
+    console.error('Error updating ekskul:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
+  }
+});
+
+router.delete('/ekskul/:id', async (c) => {
+  try {
+    const { id } = c.req.param();
+    const result = await deleteEkskul(id);
+    if (result.success) {
+      return c.json(result);
+    } else {
+      return c.json(result, 404);
+    }
+  } catch (error) {
+    console.error('Error deleting ekskul:', error);
+    return c.json({ success: false, error: 'Internal server error' }, 500);
+  }
+});
+
+export default router;

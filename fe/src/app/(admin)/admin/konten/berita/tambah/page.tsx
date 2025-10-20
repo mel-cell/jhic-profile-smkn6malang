@@ -6,7 +6,7 @@ import { Camera, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 // --- Komponen Input Teks Dasar ---
-const FormInput = ({ label, id, type = 'text', placeholder = '' }) => (
+const FormInput = ({ label, id, type = 'text', placeholder = '' }: { label: string; id: string; type?: string; placeholder?: string }) => (
     <div className="mb-6">
         <label htmlFor={id} className="block text-base font-medium text-gray-700 mb-2">
             {label}
@@ -22,7 +22,7 @@ const FormInput = ({ label, id, type = 'text', placeholder = '' }) => (
 );
 
 // --- Komponen Textarea ---
-const FormTextarea = ({ label, id }) => (
+const FormTextarea = ({ label, id }: { label: string; id: string }) => (
     <div className="mb-6">
         <label htmlFor={id} className="block text-base font-medium text-gray-700 mb-2">
             {label}
@@ -47,11 +47,55 @@ const AdminTambahBeritaPage: React.FC = () => {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Berita Disimpan');
-        // Implementasi nyata: kirim data form dan file ke backend
-        alert('Berita berhasil diunggah (Lihat console)');
+
+        const formData = new FormData();
+        const judul = (document.getElementById('judul') as HTMLInputElement).value;
+        const isi = (document.getElementById('isi') as HTMLTextAreaElement).value;
+        const tanggal = (document.getElementById('tanggal') as HTMLInputElement).value;
+        const penerbit = (document.getElementById('penerbit') as HTMLInputElement).value;
+
+        if (!judul || !isi || !tanggal || !penerbit) {
+            alert('Semua field harus diisi!');
+            return;
+        }
+
+        formData.append('judul', judul);
+        formData.append('content', isi);
+        formData.append('kategori', 'Berita'); // Default kategori
+
+        if (selectedFile) {
+            formData.append('image', selectedFile);
+        }
+
+        try {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                alert('Token tidak ditemukan. Silakan login terlebih dahulu.');
+                return;
+            }
+
+            const response = await fetch('/api/admin/news', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('Berita berhasil dibuat!');
+                window.location.href = '/admin/konten/berita';
+            } else {
+                alert('Gagal membuat berita: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error creating news:', error);
+            alert('Terjadi kesalahan saat membuat berita');
+        }
     };
 
     return (

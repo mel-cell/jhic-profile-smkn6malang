@@ -8,25 +8,16 @@ import { companiesAPI, jobsAPI } from '../../../services/api';
 
 // --- KOMPONEN KARTU RIWAYAT LOWONGAN ---
 const JobHistoryCard = ({ job }: { job: any }) => {
-    const statusClass = job.status === 'Dibuka' 
-        ? 'text-green-600 bg-green-100' 
-        : 'text-red-600 bg-red-100';
-
     return (
-        <Link 
-            href={`/industri/lowongan/${job.id}`} 
+        <Link
+            href={`/industri/lowongan/${job.id}`}
             className="block bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-shadow duration-200 h-full"
         >
             <h3 className="text-lg font-bold text-gray-900 mb-3">{job.jobTitle}</h3>
-            
+
             <div className="flex items-center text-sm text-gray-600 mb-3">
                 <Calendar className="w-4 h-4 mr-2 text-gray-500" />
                 <span>{new Date(job.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-            </div>
-            
-            <div className={`flex items-center text-xs font-semibold px-3 py-1 rounded-full w-fit mb-4 ${statusClass}`}>
-                <div className={`w-2 h-2 rounded-full mr-2 ${job.status === 'APPROVED' ? 'bg-green-600' : job.status === 'PENDING' ? 'bg-yellow-600' : 'bg-red-600'}`}></div>
-                {job.status === 'APPROVED' ? 'Dibuka' : job.status === 'PENDING' ? 'Menunggu Persetujuan' : 'Ditolak'}
             </div>
 
             <div className="flex justify-between items-center text-sm font-semibold text-blue-600 pt-3 border-t border-gray-100">

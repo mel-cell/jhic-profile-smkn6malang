@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -136,6 +135,18 @@ model Berita {
 
   // Relasi ke User (satu-ke-banyak)
   author User @relation(fields: [userId], references: [id])
+}
+
+// Model untuk prestasi
+model Prestasi {
+  id          String   @id @default(uuid())
+  judul       String
+  deskripsi   String
+  imagePath   String?
+  tanggal     DateTime
+  kategori    String? // Menggunakan String untuk kategori, bisa dibuat enum jika kategori terbatas
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // Model untuk ekskul

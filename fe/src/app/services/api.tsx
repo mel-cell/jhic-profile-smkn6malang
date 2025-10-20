@@ -49,6 +49,48 @@ export const newsAPI = {
   getById: async (newsId: string) => {
     return apiRequest(`/public/news/${newsId}`)
   },
+
+  // Create news (admin only)
+  create: async (data: {
+    judul: string
+    content: string
+    imagePath?: string
+    kategori?: string
+  }, token: string) => {
+    return apiRequest('/admin/news', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+
+  // Update news (admin only)
+  update: async (newsId: string, data: {
+    judul?: string
+    content?: string
+    imagePath?: string
+    kategori?: string
+  }, token: string) => {
+    return apiRequest(`/admin/news/${newsId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+
+  // Delete news (admin only)
+  delete: async (newsId: string, token: string) => {
+    return apiRequest(`/admin/news/${newsId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
 }
 
 // Extracurricular/Ekskul APIs
@@ -86,6 +128,16 @@ export const jobsAPI = {
     const endpoint = `/public/jobs${query ? `?${query}` : ''}`
 
     return apiRequest(endpoint)
+  },
+
+  // Get all approved jobs for companies (to view all available jobs)
+  getAllApproved: async (token: string) => {
+    return apiRequest('/public/jobs', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
   },
 
   // Get job detail by ID (public - only approved jobs)
@@ -281,6 +333,138 @@ export const reviewsAPI = {
   },
 }
 
+// Prestasi APIs
+export const prestasiAPI = {
+  // Get all prestasi
+  getAll: async (params?: { limit?: number; offset?: number; kategori?: string }) => {
+    const queryParams = new URLSearchParams()
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.offset) queryParams.append('offset', params.offset.toString())
+    if (params?.kategori) queryParams.append('kategori', params.kategori)
+
+    const query = queryParams.toString()
+    const endpoint = `/public/prestasi${query ? `?${query}` : ''}`
+
+    return apiRequest(endpoint)
+  },
+
+  // Get prestasi detail by ID
+  getById: async (prestasiId: string) => {
+    return apiRequest(`/public/prestasi/${prestasiId}`)
+  },
+
+  // Create prestasi (admin only)
+  create: async (data: {
+    title: string
+    studentId: string
+    competitionLevel: string
+    organizer: string
+    date: string
+    imagePath?: string
+  }, token: string) => {
+    return apiRequest('/admin/prestasi', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+
+  // Update prestasi (admin only)
+  update: async (prestasiId: string, data: {
+    title?: string
+    studentId?: string
+    competitionLevel?: string
+    organizer?: string
+    date?: string
+    imagePath?: string
+  }, token: string) => {
+    return apiRequest(`/admin/prestasi/${prestasiId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+
+  // Delete prestasi (admin only)
+  delete: async (prestasiId: string, token: string) => {
+    return apiRequest(`/admin/prestasi/${prestasiId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+}
+
+// Ekskul APIs
+export const ekskulAPI = {
+  // Get all ekskul
+  getAll: async (params?: { limit?: number; offset?: number; kategori?: string }) => {
+    const queryParams = new URLSearchParams()
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.offset) queryParams.append('offset', params.offset.toString())
+    if (params?.kategori) queryParams.append('kategori', params.kategori)
+
+    const query = queryParams.toString()
+    const endpoint = `/public/ekskul${query ? `?${query}` : ''}`
+
+    return apiRequest(endpoint)
+  },
+
+  // Get ekskul detail by ID
+  getById: async (ekskulId: string) => {
+    return apiRequest(`/public/ekskul/${ekskulId}`)
+  },
+
+  // Create ekskul (admin only)
+  create: async (data: {
+    namaEkskul: string
+    deskripsi?: string
+    kategori?: string
+    status?: string
+    userInternal?: string
+  }, token: string) => {
+    return apiRequest('/admin/ekskul', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+
+  // Update ekskul (admin only)
+  update: async (ekskulId: string, data: {
+    namaEkskul?: string
+    deskripsi?: string
+    kategori?: string
+    status?: string
+    userInternal?: string
+  }, token: string) => {
+    return apiRequest(`/admin/ekskul/${ekskulId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+
+  // Delete ekskul (admin only)
+  delete: async (ekskulId: string, token: string) => {
+    return apiRequest(`/admin/ekskul/${ekskulId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+}
+
 // Students APIs (for authenticated students)
 export const studentsAPI = {
   // Get student profile
@@ -288,7 +472,7 @@ export const studentsAPI = {
     return apiRequest('/students/profile', {
       method: 'GET',
       headers: {
-        ' ': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`
       }
     })
   },
@@ -520,7 +704,7 @@ export const adminAPI = {
 
   // Job posting management
   getAllJobPostings: async (token: string) => {
-    return apiRequest('/admin/jobs', {
+    return apiRequest('/admin/job-postings', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -529,7 +713,7 @@ export const adminAPI = {
   },
 
   updateJobPostingStatus: async (jobId: string, status: string, token: string) => {
-    return apiRequest(`/admin/jobs/${jobId}/status`, {
+    return apiRequest(`/admin/job-postings/${jobId}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
       headers: {
@@ -582,6 +766,54 @@ export const adminAPI = {
     return apiRequest('/settings', {
       method: 'PUT',
       body: JSON.stringify(data),
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  }
+}
+
+// Applications APIs (for students)
+export const applicationsAPI = {
+  // Apply for a job
+  apply: async (jobId: string, data: {
+    studentCvId: string
+    notes?: string
+  }, token: string) => {
+    return apiRequest(`/applications/jobs/${jobId}/apply`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+
+  // Get my applications (for students)
+  getMyApplications: async (token: string) => {
+    return apiRequest('/applications', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+
+  // Update application status (for companies)
+  updateStatus: async (applicationId: string, status: string, token: string) => {
+    return apiRequest(`/applications/${applicationId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+  },
+
+  // Delete application (for students)
+  delete: async (applicationId: string, token: string) => {
+    return apiRequest(`/applications/${applicationId}`, {
+      method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
       }

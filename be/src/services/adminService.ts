@@ -6,28 +6,50 @@ export interface UpdateUserRoleData {
 
 export async function getAllUsers() {
   const users = await prisma.user.findMany({
+    include: {
+      studentProfile: true,
+      companyProfile: true
+    },
     orderBy: { createdAt: 'desc' }
   })
 
-  // Get profiles separately
-  const usersWithProfiles = await Promise.all(
-    users.map(async (user) => {
-      const studentProfile = await prisma.studentProfile.findUnique({
-        where: { userId: user.id }
-      })
-      const companyProfile = await prisma.companyProfile.findUnique({
-        where: { userId: user.id }
-      })
+  // Transform data to match frontend expectations
+  const transformedUsers = users.map(user => {
+    const baseUser = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    }
 
+    if (user.role === 'STUDENT' && user.studentProfile) {
       return {
-        ...user,
-        studentProfile,
-        companyProfile
+        ...baseUser,
+        name: user.studentProfile.fullName,
+        nisn: user.studentProfile.nis,
+        class: user.studentProfile.major,
+        birthdate: user.studentProfile.birthDate,
+        phone: user.studentProfile.phoneNumber,
+        image: user.studentProfile.profilePhotoPath
       }
-    })
-  )
+    } else if (user.role === 'COMPANY' && user.companyProfile) {
+      return {
+        ...baseUser,
+        name: user.companyProfile.companyName,
+        pic: user.companyProfile.contactPersonName,
+        address: user.companyProfile.address,
+        email: user.companyProfile.contactPersonEmail,
+        field: user.companyProfile.industryType,
+        logo: user.companyProfile.logoPath,
+        status: 'AKTIF' // Default status, could be enhanced later
+      }
+    }
 
-  return usersWithProfiles
+    return baseUser
+  })
+
+  return transformedUsers
 }
 
 export async function updateUserRole(userId: string, data: UpdateUserRoleData) {
@@ -39,7 +61,7 @@ export async function updateUserRole(userId: string, data: UpdateUserRoleData) {
 
 export async function deleteUser(userId: string) {
   // Get user data
-  const user = await prisma.user.findUnique({
+  const user: any = await prisma.user.findUnique({
     where: { id: userId }
   })
 

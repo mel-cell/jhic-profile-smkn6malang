@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SideBar from '@/components/admin/SideBar';
+import ButtonAi from '@/components/chatbot/ButtonAi';
+import { Menu } from 'lucide-react';
 
 export default function AdminLayout({
     children,
@@ -12,6 +14,7 @@ export default function AdminLayout({
     const router = useRouter();
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
         const checkAuth = () => {
@@ -47,8 +50,25 @@ export default function AdminLayout({
     if (isAuthorized) {
         return (
             <>
-                <SideBar />
-                <main className="top-0 relative ml-64">{children}</main>
+                <SideBar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+
+                {/* Mobile Menu Button */}
+                <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg hover:bg-gray-50 transition-colors"
+                    aria-label="Open sidebar"
+                >
+                    <Menu className="w-6 h-6 text-gray-700" />
+                </button>
+
+                <main className="md:ml-64 transition-all duration-300 ease-in-out">
+                    <div className="p-4 md:p-6 lg:p-8 pt-16 md:pt-6">
+                        {children}
+                    </div>
+                </main>
+
+                {/* AI Chatbot Button - Fixed position bottom right */}
+                <ButtonAi />
             </>
         );
     }

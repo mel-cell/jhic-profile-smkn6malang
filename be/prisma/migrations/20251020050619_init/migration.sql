@@ -18,10 +18,15 @@ CREATE TABLE "StudentProfile" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "fullName" TEXT NOT NULL,
+    "nis" TEXT,
     "address" TEXT,
     "phoneNumber" TEXT,
     "major" TEXT,
     "description" TEXT,
+    "profilePhotoPath" TEXT,
+    "gender" TEXT,
+    "birthDate" TEXT,
+    "skills" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -59,6 +64,20 @@ CREATE TABLE "Berita" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Berita_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Prestasi" (
+    "id" TEXT NOT NULL,
+    "judul" TEXT NOT NULL,
+    "deskripsi" TEXT NOT NULL,
+    "imagePath" TEXT,
+    "tanggal" TIMESTAMP(3) NOT NULL,
+    "kategori" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Prestasi_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable

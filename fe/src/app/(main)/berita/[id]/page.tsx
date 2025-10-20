@@ -1,7 +1,6 @@
 "use client";
 
 import { FaArrowLeft, FaCalendar } from "react-icons/fa";
-import { notFound } from 'next/navigation';
 import Image from "next/image";
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -19,19 +18,19 @@ interface NewsDetail {
 
 const NewsDetailPage = () => {
     const params = useParams();
-    const slug = params?.slug as string;
+    const id = params?.id as string;
 
     const [news, setNews] = useState<NewsDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!slug) return;
+        if (!id) return;
 
         const fetchNews = async () => {
             try {
                 setLoading(true);
-                const response = await newsAPI.getById(slug);
+                const response = await newsAPI.getById(id);
                 if (response.success) {
                     setNews(response.data);
                 } else {
@@ -46,7 +45,7 @@ const NewsDetailPage = () => {
         };
 
         fetchNews();
-    }, [slug]);
+    }, [id]);
 
     if (loading) {
         return (
@@ -57,7 +56,50 @@ const NewsDetailPage = () => {
     }
 
     if (error || !news) {
-        notFound();
+        const NAVBAR_HEIGHT_NEG = "-mt-[6rem] md:-mt-[10rem]";
+        return (
+            <main className="w-full">
+                {/* 1. HERO SECTION (Header Berita Detail) */}
+                <section className={`relative
+                    w-screen -mx-[calc(50vw-50%)]
+                    h-[40vh] md:h-[60vh]
+                    flex items-end overflow-hidden
+                    ${NAVBAR_HEIGHT_NEG}
+                `}>
+                    <Image
+                        src="/aboutbg.webp"
+                        alt="Papan Nama Sekolah"
+                        fill
+                        className="object-cover brightness-[0.5] transition-transform duration-1000"
+                        priority
+                        sizes="100vw"
+                    />
+                    <div className="relative z-10 w-full p-8 md:p-12">
+                        <h1 className="text-white font-bold text-5xl md:text-8xl tracking-wider drop-shadow-lg">
+                            Berita
+                        </h1>
+                    </div>
+                </section>
+
+                {/* 2. ERROR MESSAGE */}
+                <section className="max-w-4xl mx-auto px-6 pt-16 pb-20">
+                    <div className="text-center">
+                        <h2 className="text-3xl font-bold text-red-600 mb-4">
+                            {error ? 'Error' : 'Berita Tidak Ditemukan'}
+                        </h2>
+                        <p className="text-gray-600 mb-6">
+                            {error || 'Berita yang Anda cari tidak tersedia atau telah dihapus.'}
+                        </p>
+                        <Link
+                            href="/berita"
+                            className="inline-flex items-center text-orange-600 font-semibold hover:text-orange-700 transition-colors"
+                        >
+                            <FaArrowLeft className="mr-2" /> Kembali ke Semua Berita
+                        </Link>
+                    </div>
+                </section>
+            </main>
+        );
     }
 
     const NAVBAR_HEIGHT_NEG = "-mt-[6rem] md:-mt-[10rem]";

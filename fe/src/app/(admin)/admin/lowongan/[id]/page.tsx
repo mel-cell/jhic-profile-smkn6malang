@@ -1,186 +1,430 @@
-// File: src/app/admin/lowongan-kerja/[id]/detail/page.tsx
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-    ArrowLeft, Briefcase, Mail, MapPin, DollarSign, 
-    Users, Clock, User, Trash2, Edit2 
-} from 'lucide-react';
+import { ArrowLeft, Building, MapPin, Calendar, DollarSign, Users, FileText, Edit2, Trash2, CheckCircle, XCircle, Clock, Eye } from 'lucide-react';
+import { adminAPI } from '@/app/services/api';
 
-// --- DATA DUMMY ---
-const LOWONGAN_DETAIL = {
-    id: 1,
-    company: 'PT. Ballerina cappucina',
-    location: 'JL. sound horog jaya no 18 malang',
-    logo: '/logo-ballerina.png', // Placeholder logo
-    jobTitle: 'Desainer UI/UX',
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis lacinia nibh. Curabitur cursus sem nec nunc ornare, et feugiat eros bibendum. Integer augue dui, vulputate ac tortor vitae, volutpat congue justo. Fusce at dignissim arcu. Cras in leo magna. Vivamus mattis a nunc sed auctor. Ut nec venenatis augue, et ullamcorper dui. \n\nPellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Donec non volutpat nunc, eget vehicula nunc.",
-    
-    // Informasi Lowongan
-    field: 'Desain & Kreatif',
-    jobType: 'Full Time & Part Time',
-    remoteType: 'Remote / WFH',
-    salary: '2.500.000 - 3.000.000',
-    applicants: 30,
-    gender: 'Laki - laki & Perempuan',
-    
-    // Kualifikasi
-    qualifications: [
-        'Laki-laki / perempuan',
-        'Jurusan IT / Non IT (RPL dan Sija Di Utamakan)',
-        'Menguasai tools desain seperti Figma, Adobe XD, atau Sketch',
-        'Memahami prinsip User Interface dan User Experience (hierarki visual, konsistensi, usability)',
-        'Mampu membuat wireframe, prototype, dan mockup yang interaktif',
-        'Memiliki portofolio yang menunjukkan proyek desain UI/UX yang pernah dikerjakan',
-    ],
-};
+interface JobDetail {
+  id: string;
+  jobTitle: string;
+  description: string;
+  requirements: string;
+  location: string;
+  salaryRange: string;
+  employmentType: string;
+  applicationDeadline: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  companyId: string;
+  companyName: string;
+  companyEmail: string;
+  applicationsCount: number;
+}
 
-// Data Pelamar (5 pelamar sesuai screenshot)
-const PELAMAR_DATA = [
-    { id: 1, name: 'Kim Sunoo', class: 'XII RPL 3', image: '/kim-sunoo-1.jpg' },
-    { id: 2, name: 'Kim Sunoo', class: 'XII RPL 3', image: '/kim-sunoo-2.jpg' },
-    { id: 3, name: 'Kim Sunoo', class: 'XII RPL 3', image: '/kim-sunoo-3.jpg' },
-    { id: 4, name: 'Kim Sunoo', class: 'XII RPL 3', image: '/kim-sunoo-4.jpg' },
-    { id: 5, name: 'Kim Sunoo', class: 'XII RPL 3', image: '/kim-sunoo-5.jpg' },
-];
+const AdminJobDetailPage: React.FC<{ params: { id: string } }> = ({ params }) => {
+  const [job, setJob] = useState<JobDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState('details');
 
-// --- KOMPONEN ITEM INFO (FIELD LOWONGAN) ---
-const InfoItem = ({ label, value, icon: Icon }) => (
-    <div className="flex flex-col mb-4 w-1/3 min-w-[150px]">
-        <div className="flex items-center text-sm font-semibold text-gray-500 mb-1">
-            <Icon className="w-4 h-4 mr-1 text-blue-500" />
-            {label}
-        </div>
-        <p className="text-gray-900 font-medium">{value}</p>
-    </div>
-);
+  useEffect(() => {
+    const fetchJobDetail = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('authToken');
 
-// --- KOMPONEN KARTU PELAMAR ---
-const PelamarCard = ({ data }) => (
-    <div className="bg-white p-3 rounded-xl border border-gray-200 flex flex-col items-center text-center shadow-sm">
-        <div className="w-16 h-16 overflow-hidden rounded-full mb-2 border-2 border-gray-300">
-            <img 
-                src={data.image} 
-                alt={data.name} 
-                className="w-full h-full object-cover"
-            />
-        </div>
-        <h4 className="text-sm font-bold text-gray-900 leading-tight">{data.name}</h4>
-        <p className="text-xs text-gray-500 mb-3">{data.class}</p>
-        <button className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors">
-            Lihat CV
-        </button>
-    </div>
-);
+        if (!token) {
+          console.error('No auth token found');
+          return;
+        }
 
-// --- KOMPONEN UTAMA DETAIL LOWONGAN ---
-const AdminDetailLowonganPage: React.FC = () => {
-    const data = LOWONGAN_DETAIL; // Menggunakan data dummy
+        // Fetch all job postings
+        const jobsRes = await adminAPI.getAllJobPostings(token);
+        const allJobs = jobsRes.data || [];
+        const jobData = allJobs.find((j: any) => j.id === params.id);
 
+        if (jobData) {
+          // Transform job data
+          const job: JobDetail = {
+            id: jobData.id,
+            jobTitle: jobData.jobTitle,
+            description: jobData.description || '',
+            requirements: jobData.requirements || '',
+            location: jobData.location || '',
+            salaryRange: jobData.salaryRange || '',
+            employmentType: jobData.employmentType || '',
+            applicationDeadline: jobData.applicationDeadline || '',
+            status: jobData.status || 'PENDING',
+            createdAt: jobData.createdAt || '',
+            updatedAt: jobData.updatedAt || '',
+            companyId: jobData.companyId,
+            companyName: jobData.company?.companyName || 'Perusahaan tidak ditemukan',
+            companyEmail: jobData.company?.email || '',
+            applicationsCount: jobData._count?.applications || 0
+          };
+          setJob(job);
+        }
+
+        // Fetch applications for this job
+        const applicationsRes = await adminAPI.getAllApplications(token);
+        const allApplications = applicationsRes.data || [];
+        const jobApplications = allApplications.filter((app: any) => app.jobId === params.id);
+        setApplications(jobApplications);
+
+      } catch (error) {
+        console.error('Failed to fetch job details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (params.id) {
+      fetchJobDetail();
+    }
+  }, [params.id]);
+
+  const handleUpdateJobStatus = async (newStatus: string) => {
+    if (!job) return;
+
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        alert('Token tidak ditemukan. Silakan login kembali.');
+        return;
+      }
+
+      await adminAPI.updateJobPostingStatus(job.id, newStatus, token);
+
+      // Update local state
+      setJob(prev => prev ? { ...prev, status: newStatus } : null);
+
+      alert(`Status lowongan berhasil diubah menjadi ${newStatus === 'ACTIVE' ? 'Aktif' : newStatus === 'REJECTED' ? 'Ditolak' : 'Pending'}`);
+    } catch (error) {
+      console.error('Failed to update job status:', error);
+      alert('Gagal mengubah status lowongan.');
+    }
+  };
+
+  const handleDeleteJob = async () => {
+    if (!confirm('Apakah Anda yakin ingin menghapus lowongan ini? Semua lamaran terkait akan hilang.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        alert('Token tidak ditemukan. Silakan login kembali.');
+        return;
+      }
+
+      // Note: We need to add deleteJobPosting method to adminAPI
+      // For now, we'll use a placeholder
+      alert('Fitur hapus lowongan akan diimplementasikan');
+      // await adminAPI.deleteJobPosting(job.id, token);
+      // window.location.href = '/admin/lowongan';
+    } catch (error) {
+      console.error('Failed to delete job:', error);
+      alert('Gagal menghapus lowongan.');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ACTIVE': return 'bg-green-100 text-green-800';
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+      case 'REJECTED': return 'bg-red-100 text-red-800';
+      case 'EXPIRED': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'ACTIVE': return 'Aktif';
+      case 'PENDING': return 'Menunggu Persetujuan';
+      case 'REJECTED': return 'Ditolak';
+      case 'EXPIRED': return 'Kadaluarsa';
+      default: return status;
+    }
+  };
+
+  if (loading) {
     return (
-        <div className="p-8">
-            <div className="flex items-center mb-8">
-                {/* Link Kembali ke Daftar Lowongan */}
-                <Link href="/admin/lowongan" className="text-xl font-bold text-gray-900 hover:text-blue-600 mr-4">
-                    <ArrowLeft className="w-6 h-6" />
-                </Link>
-                <h1 className="text-3xl font-extrabold text-gray-900">Detail lowongan</h1>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                
-                {/* Kolom Kiri (Deskripsi Utama & Pelamar) - 3/4 Lebar */}
-                <div className="lg:col-span-3">
-                    <div className="bg-white p-8 rounded-xl shadow-2xl border border-gray-200">
-                        
-                        {/* Header Perusahaan & Pekerjaan */}
-                        <div className="flex items-start mb-6 border-b pb-4">
-                            <div className="w-16 h-16 rounded-lg border flex-shrink-0 mr-4">
-                                <img src={data.logo} alt="Logo" className="w-full h-full object-contain p-2" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-semibold text-gray-700">{data.company}</h2>
-                                <p className="text-sm text-gray-500 mb-3 flex items-center">
-                                    <MapPin className="w-4 h-4 mr-1" /> {data.location}
-                                </p>
-                                <h1 className="text-4xl font-extrabold text-gray-900">{data.jobTitle}</h1>
-                            </div>
-                        </div>
-
-                        {/* Deskripsi Lowongan */}
-                        <div className="mb-8">
-                            <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">{data.description}</p>
-                        </div>
-
-                        {/* Rincian Info Lowongan (Bidang, Tipe, Gaji, dll) */}
-                        <div className="flex flex-wrap border-b pb-6 mb-6">
-                            <InfoItem label="Bidang pekerjaan" value={data.field} icon={Briefcase} />
-                            <InfoItem label="Jenis pekerjaan" value={data.jobType} icon={Clock} />
-                            <InfoItem label="Tipe pekerjaan" value={data.remoteType} icon={MapPin} />
-                            <InfoItem label="Jenis Kelamin" value={data.gender} icon={User} />
-                            <InfoItem label="Gaji" value={data.salary} icon={DollarSign} />
-                            <InfoItem label="Pelamar" value={`${data.applicants} orang`} icon={Users} />
-                        </div>
-
-                        {/* Kualifikasi */}
-                        <div className="mb-8">
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Kualifikasi</h3>
-                            <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-                                {data.qualifications.map((item, index) => (
-                                    <li key={index}>{item}</li>
-                                ))}
-                            </ul>
-                        </div>
-                        
-                        {/* Tombol Aksi Admin */}
-                        <div className="flex justify-start space-x-4 border-t pt-4">
-                            <button
-                                className="flex items-center bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-5 rounded-lg transition-colors"
-                            >
-                                <Edit2 className="w-4 h-4 mr-2" /> Edit lowongan
-                            </button>
-                            <button
-                                className="flex items-center bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-5 rounded-lg transition-colors"
-                            >
-                                <Trash2 className="w-4 h-4 mr-2" /> Hapus lowongan
-                            </button>
-                        </div>
-                    </div>
-                    
-                    {/* Daftar Pelamar */}
-                    <div className="mt-8">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-4">Pelamar ({PELAMAR_DATA.length})</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                            {PELAMAR_DATA.map(pelamar => (
-                                <PelamarCard key={pelamar.id} data={pelamar} />
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Kolom Kanan (Lowongan Lain / Info Tambahan) - 1/4 Lebar */}
-                <div className="lg:col-span-1">
-                    <div className="sticky top-8 bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-                        <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-3">Lowongan Lain</h3>
-                        {/* Simulasi Card Lowongan Lain */}
-                        <div className="border-b pb-3 mb-3">
-                            <p className="text-sm font-semibold text-gray-900">Front-end Junior</p>
-                            <p className="text-xs text-gray-500">PT. Ballerina cappucina</p>
-                            <span className="text-xs text-blue-500">Magang, Full Time</span>
-                            <Link href="#" className="block mt-2 text-blue-500 text-sm hover:underline">Detail</Link>
-                        </div>
-                        <div className="border-b pb-3 mb-3">
-                            <p className="text-sm font-semibold text-gray-900">Technical Writer</p>
-                            <p className="text-xs text-gray-500">PT. Ballerina cappucina</p>
-                            <span className="text-xs text-blue-500">Part Time</span>
-                            <Link href="#" className="block mt-2 text-blue-500 text-sm hover:underline">Detail</Link>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div className="p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat detail lowongan...</p>
         </div>
+      </div>
     );
+  }
+
+  if (!job) {
+    return (
+      <div className="p-8">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Lowongan tidak ditemukan</h2>
+          <Link href="/admin/lowongan" className="text-blue-600 hover:underline">
+            Kembali ke daftar lowongan
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const tabs = [
+    { id: 'details', label: 'Detail Lowongan', icon: FileText },
+    { id: 'applications', label: 'Lamaran', icon: Users }
+  ];
+
+  return (
+    <div className="p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center space-x-4">
+          <Link
+            href="/admin/lowongan"
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Kembali
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Detail Lowongan</h1>
+            <p className="text-gray-600 mt-1">{job.jobTitle}</p>
+          </div>
+        </div>
+
+        <div className="flex space-x-3">
+          {job.status === 'PENDING' && (
+            <>
+              <button
+                onClick={() => handleUpdateJobStatus('ACTIVE')}
+                className="flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Setujui
+              </button>
+              <button
+                onClick={() => handleUpdateJobStatus('REJECTED')}
+                className="flex items-center bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Tolak
+              </button>
+            </>
+          )}
+          <Link
+            href={`/admin/lowongan/edit/${job.id}`}
+            className="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+          >
+            <Edit2 className="w-4 h-4 mr-2" />
+            Edit
+          </Link>
+          <button
+            onClick={handleDeleteJob}
+            className="flex items-center bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Hapus
+          </button>
+        </div>
+      </div>
+
+      {/* Status Badge */}
+      <div className="mb-6">
+        <span className={`inline-block px-4 py-2 text-sm font-medium rounded-full ${getStatusColor(job.status)}`}>
+          {getStatusText(job.status)}
+        </span>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="bg-white rounded-lg shadow-sm border mb-6">
+        <div className="flex border-b">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center px-6 py-4 font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="w-5 h-5 mr-2" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab Content */}
+        <div className="p-6">
+          {/* Details Tab */}
+          {activeTab === 'details' && (
+            <div className="space-y-6">
+              {/* Job Header */}
+              <div className="border-b pb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">{job.jobTitle}</h2>
+                <div className="flex items-center text-gray-600 mb-4">
+                  <Building className="w-5 h-5 mr-2" />
+                  <span>{job.companyName}</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="flex items-center">
+                    <MapPin className="w-4 h-4 text-gray-400 mr-2" />
+                    <span>{job.location || 'Lokasi tidak ditentukan'}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
+                    <span>{job.salaryRange || 'Gaji tidak ditentukan'}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 text-gray-400 mr-2" />
+                    <span>{job.employmentType || 'Tipe tidak ditentukan'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Job Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Deskripsi Pekerjaan</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-gray-700 whitespace-pre-line">{job.description || 'Deskripsi tidak tersedia'}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Persyaratan</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-gray-700 whitespace-pre-line">{job.requirements || 'Persyaratan tidak tersedia'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Perusahaan</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <Building className="w-5 h-5 text-gray-400 mr-3" />
+                      <div>
+                        <p className="text-sm text-gray-600">Nama Perusahaan</p>
+                        <p className="font-medium">{job.companyName}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <FileText className="w-5 h-5 text-gray-400 mr-3" />
+                      <div>
+                        <p className="text-sm text-gray-600">Email Perusahaan</p>
+                        <p className="font-medium">{job.companyEmail}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Informasi Lowongan</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <Calendar className="w-5 h-5 text-gray-400 mr-3" />
+                      <div>
+                        <p className="text-sm text-gray-600">Deadline Lamaran</p>
+                        <p className="font-medium">{job.applicationDeadline ? formatDate(job.applicationDeadline) : 'Tidak ada deadline'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Users className="w-5 h-5 text-gray-400 mr-3" />
+                      <div>
+                        <p className="text-sm text-gray-600">Jumlah Lamaran</p>
+                        <p className="font-medium">{job.applicationsCount} lamaran</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Dibuat pada</p>
+                      <p className="font-medium">{formatDate(job.createdAt)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Applications Tab */}
+          {activeTab === 'applications' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-900">Daftar Lamaran</h2>
+                <span className="text-sm text-gray-600">{applications.length} lamaran diterima</span>
+              </div>
+
+              {applications.length > 0 ? (
+                <div className="space-y-4">
+                  {applications.map((application) => (
+                    <div key={application.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{application.student?.fullName || 'Nama siswa tidak tersedia'}</h3>
+                          <p className="text-sm text-gray-600">{application.student?.email || 'Email tidak tersedia'}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Melamar pada: {formatDate(application.appliedAt)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
+                            application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            application.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                            application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {application.status === 'pending' ? 'Menunggu' :
+                             application.status === 'accepted' ? 'Diterima' :
+                             application.status === 'rejected' ? 'Ditolak' : application.status}
+                          </span>
+                        </div>
+                      </div>
+                      {application.notes && (
+                        <div className="mt-3 p-3 bg-gray-50 rounded">
+                          <p className="text-sm text-gray-700"><strong>Catatan:</strong> {application.notes}</p>
+                        </div>
+                      )}
+                      <div className="mt-3 flex justify-end">
+                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                          <Eye className="w-4 h-4 mr-1" />
+                          Lihat CV
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Belum ada lamaran</h3>
+                  <p className="text-gray-600">Belum ada siswa yang melamar lowongan ini.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
-export default AdminDetailLowonganPage;
+export default AdminJobDetailPage;

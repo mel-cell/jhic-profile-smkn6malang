@@ -16,13 +16,16 @@ interface Job {
     createdAt?: string;
 }
 
-const tipeLowongan = ['PartTime', 'FullTime', 'Magang'];
+const tipeLowongan = ['Full Time', 'Part Time', 'Magang'];
 const jurusanList = ['RPL', 'TAB', 'DPIB', 'TKRO', 'TKJ'];
 
 const LowonganPage: React.FC = () => {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedEmploymentTypes, setSelectedEmploymentTypes] = useState<string[]>([]);
+    const [selectedMajors, setSelectedMajors] = useState<string[]>([]);
 
     // --- State Pagination ---
     const itemsPerPage = 9;
@@ -55,8 +58,54 @@ const LowonganPage: React.FC = () => {
         fetchJobs();
     }, []);
 
+    // Filter jobs based on search and filters
+    const filteredJobs = jobs.filter(job => {
+        const matchesSearch = searchQuery === '' ||
+            job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            job.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            job.location?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesEmploymentType = selectedEmploymentTypes.length === 0 ||
+            selectedEmploymentTypes.includes(job.employmentType || '') ||
+            selectedEmploymentTypes.includes(job.employmentType?.replace(' ', '') || '');
+
+        // For now, we'll skip major filtering since the API doesn't provide major info
+        // This can be enhanced later when the backend provides major information
+        const matchesMajor = true;
+
+        return matchesSearch && matchesEmploymentType && matchesMajor;
+    });
+
+    // Update pagination based on filtered jobs
+    const filteredTotalItems = filteredJobs.length;
+    const filteredTotalPages = Math.ceil(filteredTotalItems / itemsPerPage);
+    const filteredStartIndex = (currentPage - 1) * itemsPerPage;
+    const filteredEndIndex = filteredStartIndex + itemsPerPage;
+    const filteredCurrentLowongan = filteredJobs.slice(filteredStartIndex, filteredEndIndex);
+
+    // Reset to page 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedEmploymentTypes, selectedMajors]);
+
+    const handleEmploymentTypeChange = (type: string) => {
+        setSelectedEmploymentTypes(prev =>
+            prev.includes(type)
+                ? prev.filter(t => t !== type)
+                : [...prev, type]
+        );
+    };
+
+    const handleMajorChange = (major: string) => {
+        setSelectedMajors(prev =>
+            prev.includes(major)
+                ? prev.filter(m => m !== major)
+                : [...prev, major]
+        );
+    };
+
     const paginate = (pageNumber: number) => {
-        if (pageNumber >= 1 && pageNumber <= totalPages) {
+        if (pageNumber >= 1 && pageNumber <= filteredTotalPages) {
             setCurrentPage(pageNumber);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -98,12 +147,14 @@ const LowonganPage: React.FC = () => {
     // --- Komponen Filter (Search Bar dipindahkan ke sini) ---
     const FilterSection = () => (
         <div className="w-full lg:w-[250px] mb-8 lg:mb-0 space-y-8">
-            
+
             {/* Search Bar */}
             <div className="relative">
                 <input
                     type="text"
                     placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-red-600 focus:border-red-600"
                 />
                 <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -115,7 +166,12 @@ const LowonganPage: React.FC = () => {
                 <div className="space-y-2">
                     {tipeLowongan.map(tipe => (
                         <label key={tipe} className="flex items-center text-gray-600 cursor-pointer">
-                            <input type="checkbox" className="form-checkbox text-red-600 h-4 w-4 rounded" />
+                            <input
+                                type="checkbox"
+                                checked={selectedEmploymentTypes.includes(tipe)}
+                                onChange={() => handleEmploymentTypeChange(tipe)}
+                                className="form-checkbox text-red-600 h-4 w-4 rounded"
+                            />
                             <span className="ml-3">{tipe}</span>
                         </label>
                     ))}
@@ -128,13 +184,18 @@ const LowonganPage: React.FC = () => {
                 <div className="space-y-2">
                     {jurusanList.map(jurusan => (
                         <label key={jurusan} className="flex items-center text-gray-600 cursor-pointer">
-                            <input type="checkbox" className="form-checkbox text-red-600 h-4 w-4 rounded" />
+                            <input
+                                type="checkbox"
+                                checked={selectedMajors.includes(jurusan)}
+                                onChange={() => handleMajorChange(jurusan)}
+                                className="form-checkbox text-red-600 h-4 w-4 rounded"
+                            />
                             <span className="ml-3">{jurusan}</span>
                         </label>
                     ))}
                 </div>
             </div>
-            
+
         </div>
     );
 
@@ -145,7 +206,7 @@ const LowonganPage: React.FC = () => {
             const maxVisiblePages = 5; 
             
             let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            let endPage = Math.min(filteredTotalPages, startPage + maxVisiblePages - 1);
 
             if (endPage - startPage + 1 < maxVisiblePages) {
                 startPage = Math.max(1, endPage - maxVisiblePages + 1);
@@ -169,16 +230,16 @@ const LowonganPage: React.FC = () => {
                 );
             }
 
-            if (totalPages > maxVisiblePages && endPage < totalPages) {
+            if (filteredTotalPages > maxVisiblePages && endPage < filteredTotalPages) {
                 pages.push(<span key="dots-end" className="px-4 py-2 text-gray-500">...</span>);
-                if (endPage < totalPages) {
+                if (endPage < filteredTotalPages) {
                      pages.push(
                         <button
-                            key={totalPages}
-                            onClick={() => paginate(totalPages)}
+                            key={filteredTotalPages}
+                            onClick={() => paginate(filteredTotalPages)}
                             className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-full font-medium transition-colors"
                         >
-                            {totalPages}
+                            {filteredTotalPages}
                         </button>
                     );
                 }
@@ -194,9 +255,9 @@ const LowonganPage: React.FC = () => {
                     onClick={() => paginate(currentPage - 1)}
                     disabled={currentPage === 1}
                     className={`
-                        p-3 rounded-full transition-colors 
-                        ${currentPage === 1 
-                            ? 'text-gray-400 cursor-not-allowed' 
+                        p-3 rounded-full transition-colors
+                        ${currentPage === 1
+                            ? 'text-gray-400 cursor-not-allowed'
                             : 'text-gray-700 hover:bg-gray-200'
                         }
                     `}
@@ -210,11 +271,11 @@ const LowonganPage: React.FC = () => {
 
                 <button
                     onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage === filteredTotalPages}
                     className={`
-                        p-3 rounded-full transition-colors 
-                        ${currentPage === totalPages 
-                            ? 'text-gray-400 cursor-not-allowed' 
+                        p-3 rounded-full transition-colors
+                        ${currentPage === filteredTotalPages
+                            ? 'text-gray-400 cursor-not-allowed'
                             : 'text-gray-700 hover:bg-gray-200'
                         }
                     `}
@@ -256,7 +317,7 @@ const LowonganPage: React.FC = () => {
                             ) : (
                                 <>
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                        {currentLowongan.map((lowongan, index) => (
+                                        {filteredCurrentLowongan.map((lowongan, index) => (
                                             <LowonganCard
                                                 key={lowongan.id}
                                                 lowongan={lowongan}
@@ -265,9 +326,14 @@ const LowonganPage: React.FC = () => {
                                         ))}
                                     </div>
 
-                                    {currentLowongan.length === 0 && (
+                                    {filteredCurrentLowongan.length === 0 && (
                                         <div className="text-center py-16">
-                                            <p className="text-gray-500 text-lg">Belum ada lowongan kerja tersedia saat ini.</p>
+                                            <p className="text-gray-500 text-lg">
+                                                {jobs.length === 0
+                                                    ? "Belum ada lowongan kerja tersedia saat ini."
+                                                    : "Tidak ada lowongan kerja yang sesuai dengan filter Anda."
+                                                }
+                                            </p>
                                         </div>
                                     )}
                                 </>

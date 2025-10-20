@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MapPin, Briefcase, DollarSign, Users, Clock, Trash2, Edit, ArrowLeft } from 'lucide-react';
-import { jobsAPI } from '@/app/services/api';
+import { jobsAPI, studentsAPI } from '@/app/services/api';
 
 // Removed dummy data - now using API for real job data
 
@@ -13,18 +13,114 @@ import { jobsAPI } from '@/app/services/api';
 
 
 // --- KOMPONEN KARTU PELAMAR ---
-const PelamarCard = ({ pelamar }: { pelamar: any }) => (
-    <div className="flex flex-col items-center bg-white p-4 rounded-lg border border-gray-200 shadow-sm w-full">
-        <div className="w-20 h-20 mb-3 bg-gray-200 rounded-full overflow-hidden">
-            <img src="/placeholder-avatar.png" alt={pelamar.nama} className="w-full h-full object-cover" />
+const PelamarCard = ({ pelamar, application }: { pelamar: any; application: any }) => {
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status?.toLowerCase()) {
+            case 'pending': return 'bg-yellow-100 text-yellow-800';
+            case 'accepted': return 'bg-green-100 text-green-800';
+            case 'rejected': return 'bg-red-100 text-red-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const handleViewCv = async () => {
+        if (application.studentCv) {
+            try {
+                const token = localStorage.getItem("authToken");
+                if (!token) return;
+                const response = await studentsAPI.getCvFile(application.studentCv.fileName, token, false);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+            } catch (error) {
+                console.error('Error viewing CV:', error);
+            }
+        }
+    };
+
+    const handleDownloadCv = async () => {
+        if (application.studentCv) {
+            try {
+                const token = localStorage.getItem("authToken");
+                if (!token) return;
+                const response = await studentsAPI.getCvFile(application.studentCv.fileName, token, true);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = application.studentCv.fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Error downloading CV:', error);
+            }
+        }
+    };
+
+    return (
+        <div className="flex flex-col bg-white p-4 rounded-lg border border-gray-200 shadow-sm w-full">
+            <div className="flex items-center mb-3">
+                <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden mr-3 flex-shrink-0">
+                    <img
+                        src={pelamar.foto || "/placeholder-avatar.png"}
+                        alt={pelamar.nama}
+                        className="w-full h-full object-cover"
+                    />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm text-gray-900 truncate">{pelamar.nama}</h4>
+                    <p className="text-xs text-gray-500 truncate">{pelamar.jurusan}</p>
+                </div>
+            </div>
+
+            <div className="mb-3">
+                <p className="text-xs text-gray-600 mb-1">
+                    <span className="font-medium">Tanggal:</span> {formatDate(pelamar.tanggalLamaran)}
+                </p>
+                <span className={`inline-block text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(pelamar.status)}`}>
+                    {pelamar.status || 'Pending'}
+                </span>
+            </div>
+
+            {pelamar.notes && (
+                <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                    <span className="font-medium">Catatan:</span> {pelamar.notes}
+                </p>
+            )}
+
+            {application.studentCv ? (
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleViewCv}
+                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold py-1.5 rounded transition-colors"
+                    >
+                        Lihat CV
+                    </button>
+                    <button
+                        onClick={handleDownloadCv}
+                        className="flex-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold py-1.5 rounded transition-colors"
+                    >
+                        Unduh
+                    </button>
+                </div>
+            ) : (
+                <div className="text-center text-xs text-gray-500 py-2">
+                    CV tidak tersedia
+                </div>
+            )}
         </div>
-        <h4 className="font-semibold text-sm text-gray-900">{pelamar.nama}</h4>
-        <p className="text-xs text-gray-500 mb-4">{pelamar.jurusan}</p>
-        <button className="w-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-2 rounded-lg transition-colors">
-            Lihat CV
-        </button>
-    </div>
-);
+    );
+};
 
 // --- KOMPONEN LOWONGAN LAIN ---
 const LowonganLainCard = ({ lowongan }: { lowongan: any }) => {
@@ -244,10 +340,27 @@ const JobDetailPage = () => {
 
                         {/* 3. DAFTAR PELAMAR */}
                         <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Pelamar (0)</h2>
-                            <div className="text-center py-8">
-                                <p className="text-gray-500">Belum ada pelamar untuk lowongan ini.</p>
-                            </div>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Pelamar ({job.pelamar})</h2>
+                            {job.pelamar > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {job.jobApplications?.map((application: any, index: number) => (
+                                        <PelamarCard key={application.id} pelamar={{
+                                            nama: application.studentProfile?.fullName || 'Nama tidak tersedia',
+                                            jurusan: application.studentProfile?.major || 'Jurusan belum tersedia',
+                                            foto: application.studentProfile?.profilePhotoPath,
+                                            cv: application.studentCv?.filePath,
+                                            cvName: application.studentCv?.fileName,
+                                            tanggalLamaran: application.applicationDate,
+                                            status: application.status,
+                                            notes: application.notes
+                                        }} application={application} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <p className="text-gray-500">Belum ada pelamar untuk lowongan ini.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                     

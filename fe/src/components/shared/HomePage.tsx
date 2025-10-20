@@ -43,7 +43,7 @@ const HomePage: React.FC<HomePageProps> = ({ context }) => {
       <ChatbotModal isOpen={isAiOpen} onClose={() => setIsAiOpen(false)} />
 
       {/* CONTAINER FIXED UNTUK DUA TOMBOL (Flexbox Vertikal Rata Kanan) */}
-      <div className="fixed right-8 bottom-8 z-50 flex flex-col-reverse items-end gap-3">
+      <div className="fixed right-4 md:right-8 bottom-4 md:bottom-8 z-50 flex flex-col-reverse items-end gap-3">
         {/* 1. Tombol Back to Top */}
         {showBackToTop && (
           <button
@@ -61,7 +61,7 @@ const HomePage: React.FC<HomePageProps> = ({ context }) => {
 
       <main>
         {/* HERO SECTION */}
-        <div id="hero" className="relative ">
+        <div id="hero" className="relative">
           <HeroSection />
         </div>
 

@@ -2,10 +2,11 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import HeaderSiswa from '@/components/siswa/HeaderSiswa';
-import FooterSiswa from '@/components/siswa/FooterSiswa';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import HeaderSiswa from "@/components/siswa/HeaderSiswa";
+import FooterSiswa from "@/components/siswa/FooterSiswa";
+import ButtonAi from "@/components/chatbot/ButtonAi";
 
 interface SiswaLayoutProps {
   children: React.ReactNode;
@@ -16,23 +17,23 @@ export default function SiswaLayout({ children }: SiswaLayoutProps) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
-    useEffect(() => {
-      const checkAuth = () => {
-        const token = localStorage.getItem('authToken');
-        const userRole = localStorage.getItem('userRole');
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("authToken");
+      const userRole = localStorage.getItem("userRole");
 
-        if (!token || userRole !== 'STUDENT') {
-          // Redirect to login if not authenticated or wrong role
-          router.replace('/siswa/login');
-          return;
-        }
+      if (!token || userRole !== "STUDENT") {
+        // Redirect to login if not authenticated or wrong role
+        router.replace("/siswa/login");
+        return;
+      }
 
-        setIsAuthorized(true);
-        setIsChecking(false);
-      };
+      setIsAuthorized(true);
+      setIsChecking(false);
+    };
 
-      checkAuth();
-    }, [router]);
+    checkAuth();
+  }, [router]);
 
   // Show loading while checking auth
   if (isChecking) {
@@ -51,6 +52,8 @@ export default function SiswaLayout({ children }: SiswaLayoutProps) {
     return (
       <>
         <main className="top-0 relative">{children}</main>
+        {/* AI Chatbot Button - Fixed position bottom right */}
+        <ButtonAi />
       </>
     );
   }

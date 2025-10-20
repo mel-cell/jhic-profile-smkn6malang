@@ -12,37 +12,39 @@ const LowonganCard = ({ data }: { data: any }) => (
 
         {/* Header (Logo & Nama Perusahaan) */}
         <div className="flex items-center space-x-3 mb-3 border-b pb-3">
-            <div className="w-10 h-10 border rounded-full overflow-hidden flex-shrink-0">
-                <img src={data.logo} alt="Logo" className="w-full h-full object-contain p-1" />
+            <div className="w-10 h-10 border rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                {data.companyProfile?.logoPath ? (
+                    <img src={data.companyProfile.logoPath} alt="Logo" className="w-full h-full object-contain p-1" />
+                ) : (
+                    <span className="text-xs font-medium text-gray-500">{data.companyProfile?.companyName?.charAt(0)}</span>
+                )}
             </div>
-            <p className="text-sm font-semibold text-gray-700 leading-tight">{data.company}</p>
+            <p className="text-sm font-semibold text-gray-700 leading-tight">{data.companyProfile?.companyName || 'Perusahaan'}</p>
         </div>
 
         {/* Konten Utama */}
         <div className="flex-grow">
             <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight">{data.jobTitle}</h3>
 
-            {/* Tipe Pekerjaan & Tags */}
+            {/* Tipe Pekerjaan */}
             <div className="flex flex-wrap gap-1 mb-2">
-                {data.type?.split(',').map((item: any, index: any) => (
-                    <span key={index} className="px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
-                        {item.trim()}
-                    </span>
-                ))}
+                <span className="px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                    {data.employmentType || 'Full Time'}
+                </span>
             </div>
             <div className="flex flex-wrap gap-1 mb-3">
-                {data.tags?.map((tag: any, index: any) => (
-                    <span key={index} className="px-2 py-0.5 text-xs text-gray-600 bg-gray-100 rounded-full">
-                        {tag}
+                {data.location && (
+                    <span className="px-2 py-0.5 text-xs text-gray-600 bg-gray-100 rounded-full">
+                        {data.location}
                     </span>
-                ))}
+                )}
             </div>
 
             {/* Gaji */}
             <div className="flex items-center text-sm font-bold text-green-600">
                 <DollarSign className="w-4 h-4 mr-1" />
                 <span className="text-gray-500 font-normal mr-1">Kisaran Gaji:</span>
-                {data.salary}
+                {data.salaryRange || 'Tidak ditentukan'}
             </div>
         </div>
 
@@ -168,12 +170,11 @@ const AdminLowonganKerjaPage: React.FC = () => {
         if (!filters.partTime && !filters.fullTime && !filters.internship) return true;
 
         let matches = false;
-        const typeLower = item.type?.toLowerCase() || '';
-        const tagsLower = item.tags?.map((tag: any) => tag.toLowerCase()) || [];
+        const employmentTypeLower = item.employmentType?.toLowerCase() || '';
 
-        if (filters.partTime && typeLower.includes('part time')) matches = true;
-        if (filters.fullTime && typeLower.includes('full time')) matches = true;
-        if (filters.internship && tagsLower.includes('magang')) matches = true;
+        if (filters.partTime && employmentTypeLower.includes('part time')) matches = true;
+        if (filters.fullTime && employmentTypeLower.includes('full time')) matches = true;
+        if (filters.internship && employmentTypeLower.includes('internship')) matches = true;
 
         return matches;
     });

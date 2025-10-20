@@ -64,37 +64,37 @@ const StatsCarousel: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center gap-14 animate-fade-in-up delay-100">
+    <div className="w-full flex flex-col items-center gap-10 md:gap-14 animate-fade-in-up delay-100">
 
       {/* Bagian Stats - MENGGUNAKAN KODE ASLI ANDA */}
-      <div className="flex gap-15">
+      <div className="flex flex-wrap justify-center gap-6 md:gap-15">
         {stats.map((s: StatItem, i: number) => (
           <div
             key={i}
-            className={`${s.color} flex items-center gap-5 pl-8 pr-9 py-5 rounded-full shadow-lg text-white font-bold stat-item`}
+            className={`${s.color} flex items-center gap-3 md:gap-5 pl-6 md:pl-8 pr-6 md:pr-9 py-4 md:py-5 rounded-full shadow-lg text-white font-bold stat-item`}
           >
-            <div className="bg-white rounded-full p-3 text-black">{s.icon}</div>
+            <div className="bg-white rounded-full p-2 md:p-3 text-black">{s.icon}</div>
             <div className="flex flex-col leading-tight">
-              <span className="text-2xl">{s.label}</span>
-              <span className="text-3xl text-center">{s.value}</span>
+              <span className="text-lg md:text-2xl">{s.label}</span>
+              <span className="text-2xl md:text-3xl text-center">{s.value}</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* Bagian Carousel - Disesuaikan dengan desain mockup (gambar dan latar belakang) */}
-      <div className="relative w-full max-w-6xl flex items-center justify-center h-[550px] md:h-[600px] mt-10 overflow-hidden">
-        
+      <div className="relative w-full max-w-6xl flex items-center justify-center h-[450px] md:h-[550px] lg:h-[600px] mt-6 md:mt-10 overflow-hidden">
+
         {/* Latar Belakang Lingkaran Putih Besar untuk Gambar Utama (Menggambarkan bentuk di mockup) */}
-        <div className="absolute w-[400px] h-[400px] md:w-[550px] md:h-[550px] bg-white rounded-full z-10 shadow-inner"></div>
+        <div className="absolute w-[350px] h-[350px] md:w-[400px] md:h-[400px] lg:w-[550px] lg:h-[550px] bg-white rounded-full shadow-inner"></div>
 
         {/* Tombol Kiri - Styling Minimalis sesuai mockup */}
         <button
           onClick={prevslide}
-          className="absolute left-4 md:left-10 z-30 text-black p-3 transition duration-300 transform hover:scale-110 active:scale-95"
+          className="absolute left-2 md:left-4 lg:left-10 z-30 text-black p-2 md:p-3 transition duration-300 transform hover:scale-110 active:scale-95"
           aria-label="Previous slide"
         >
-          <ChevronLeft size={44} />
+          <ChevronLeft size={36} className="md:w-11 md:h-11" />
         </button>
 
         {/* Gambar Utama (3D Tumpukan) */}
@@ -121,14 +121,14 @@ const StatsCarousel: React.FC = () => {
                       src={s.img}
                       alt={`Jurusan ${s.id}`}
                       // Ukuran gambar aktif (400) dan samping (300) sesuai mockup
-                      width={isCurrent ? 400 : 300} 
-                      height={isCurrent ? 400 : 300}
+                      width={isCurrent ? 350 : 250}
+                      height={isCurrent ? 350 : 250}
                       // Gambar diberi rounded-full untuk menyamarkan batas persegi di mockup
                       className="rounded-full object-cover shadow-lg"
                     />
                     {/* Tanda Kuning di bawah kaki (sesuai mockup) */}
                     <div className={`
-                        absolute left-1/2 bottom-0 w-3/4 h-8 bg-yellow-400 rounded-full 
+                        absolute left-1/2 bottom-0 w-3/4 h-6 md:h-8 bg-yellow-400 rounded-full
                         transform -translate-x-1/2 translate-y-2 z-40 shadow-xl transition-opacity duration-500
                         ${isCurrent ? 'opacity-100' : 'opacity-0'}
                     `}></div>
@@ -148,13 +148,13 @@ const StatsCarousel: React.FC = () => {
         {/* Tombol Kanan - Styling Minimalis sesuai mockup */}
         <button
           onClick={nextSlide}
-          className="absolute right-4 md:right-10 z-30 text-black p-3 transition duration-300 transform hover:scale-110 active:scale-95"
+          className="absolute right-2 md:right-4 lg:right-10 z-30 text-black p-2 md:p-3 transition duration-300 transform hover:scale-110 active:scale-95"
           aria-label="Next slide"
         >
-          <ChevronRight size={44} />
+          <ChevronRight size={36} className="md:w-11 md:h-11" />
         </button>
       </div>
-      
+
     </div>
   );
 }

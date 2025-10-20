@@ -290,17 +290,17 @@ const CVListPage: React.FC = () => {
 
                 {/* --- GRID KARTU CV SISWA --- */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {students.map((siswa, index) => (
+                    {students.filter(siswa => siswa.studentCvs.length > 0).map((siswa, index) => (
                         <SiswaCard
                             key={siswa.id}
                             siswa={siswa}
                             index={index} // Kirim index untuk staggered delay
                         />
                     ))}
-                    {students.length === 0 && (
+                    {students.filter(siswa => siswa.studentCvs.length > 0).length === 0 && (
                         <div className="col-span-full text-center py-10 bg-white rounded-xl shadow-lg border border-gray-200">
                             <p className="text-xl font-semibold text-gray-700">
-                                Maaf, tidak ada siswa di jurusan {activeFilter} saat ini.
+                                Maaf, tidak ada siswa dengan CV di jurusan {activeFilter} saat ini.
                             </p>
                         </div>
                     )}

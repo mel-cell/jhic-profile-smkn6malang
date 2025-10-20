@@ -8,8 +8,8 @@ import Link from "next/link";
 
 const AboutSection: React.FC = () => {
   return (
-    <section className="w-full bg-white py-20 px-4 md:px-0 pb-50"> 
-      <div className="w-full max-w-7xl pt-20 mx-auto px-4 md:px-8 grid md:grid-cols-2 gap-10 items-center">
+    <section className="w-full bg-white py-16 md:py-20 px-4 md:px-0 pb-32 md:pb-50">
+      <div className="w-full max-w-7xl pt-10 md:pt-20 mx-auto px-4 md:px-8 grid md:grid-cols-2 gap-8 md:gap-10 items-center">
         {/* Teks - Menggunakan class kustom content-reveal */}
         <div
           className="
@@ -19,11 +19,11 @@ const AboutSection: React.FC = () => {
         >
           <p className="text-red-600 font-bold mb-3 tracking-wider uppercase text-sm animate-fade-in-up delay-100">Sedikit tentang kami</p>
 
-          <h2 className="text-3xl md:text-4xl font-extrabold text-[#003087] leading-tight mb-5 border-l-4 border-red-600 pl-4 animate-fade-in-up delay-200">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-[#003087] leading-tight mb-5 border-l-4 border-red-600 pl-4 animate-fade-in-up delay-200">
             SMKN 6 Malang – menjadi pilar keunggulan Teknik dan teknologi
           </h2>
 
-          <p className="text-gray-800 text-lg leading-relaxed mb-8 animate-fade-in-up delay-300">
+          <p className="text-gray-800 text-base md:text-lg leading-relaxed mb-6 md:mb-8 animate-fade-in-up delay-300">
             <strong>SMKN 6 Malang</strong> adalah sekolah kejuruan negeri yang
             berlokasi strategis di Kota Malang, fokus pada pengembangan
             keterampilan praktis, karakter unggul, dan kesiapan kerja siswa.
@@ -34,7 +34,7 @@ const AboutSection: React.FC = () => {
             <button
               className="
                 bg-red-600 hover:bg-red-700 text-white font-semibold
-                px-8 py-4 rounded-full transition duration-300
+                px-6 md:px-8 py-3 md:py-4 rounded-full transition duration-300
                 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5
                 animate-fade-in-up delay-400
               "
@@ -46,7 +46,7 @@ const AboutSection: React.FC = () => {
          {/* Gambar - Menggunakan class kustom content-reveal */}
         <div
           className="
-            grid grid-cols-2 gap-4 shadow-xl rounded-3xl p-1 bg-white transition duration-500
+            grid grid-cols-2 gap-3 md:gap-4 shadow-xl rounded-3xl p-1 bg-white transition duration-500
             opacity-100 content-reveal delay-300 /* <== CLASS BARU */
           "
         >
